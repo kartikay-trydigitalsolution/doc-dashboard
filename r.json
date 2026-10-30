@@ -1,0 +1,1 @@
+{"errorType":"Error","errorMessage":"processRScore expects sync_records_user_id in the event payload","trace":["Error: processRScore expects sync_records_user_id in the event payload","    at Runtime.HTt [as handler] (file:///var/task/index.mjs:242:4645)","    at Runtime.handleOnceNonStreaming (file:///var/runtime/index.mjs:1207:29)"]}

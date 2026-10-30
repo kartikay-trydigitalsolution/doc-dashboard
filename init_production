@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# to run in production
+# Initial setup
+
+set -a
+# TODO: change to use the right environment
+source /home/ubuntu/environment-production.firmtech_api
+
+mix deps.get --only prod
+MIX_ENV=prod mix compile
+
+# Compile assets - no need, since API only ?
+# MIX_ENV=prod mix assets.deploy
+
+# Custom tasks (like DB migrations)
+# MIX_ENV=prod mix ecto.migrate
+
+# stop any running app
+# fuser -k 4001/tcp
+
+# Finally run the server
+# source ./.env.staging && PORT=4001 elixir --erl "-detached" -S mix phx.server
+
+sudo systemctl stop firmtech-api-production
+
+yes Y | MIX_ENV=prod mix release
+
+# migrations run in systemd by -> ExecStartPre
+sudo systemctl start firmtech-api-production

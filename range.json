@@ -1,0 +1,1 @@
+{"errorType":"Error","errorMessage":"PostgreSQL secret is missing DATABASE_URL","trace":["Error: PostgreSQL secret is missing DATABASE_URL","    at CK (file:///var/task/index.mjs:67:33529)","    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)","    at async Runtime.mOe [as handler] (file:///var/task/index.mjs:67:34209)"]}

@@ -1,0 +1,49 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: ["production"]
+  pull_request:
+    branches: ["production"]
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    environment: "production"
+
+    steps:
+      - name: Get Public IP (cloudflare-ip)
+        id: cloudflare-ip
+        run: | 
+          ipv4=$(dig +short -4 txt ch whoami.cloudflare @1.0.0.1)
+          echo "ipv4=$ipv4" >> $GITHUB_OUTPUT
+
+      - name: Allow Security group rule to connect Github Actions to SSH-port
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        run: |
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.cloudflare-ip.outputs.ipv4 }}/32
+
+      - name: executing remote ssh commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd ${{ secrets.WORK_DIR }}
+            git stash
+            git pull origin production
+            ./init_production
+
+      - name: Deny Security group rule to connect Github Actions to SSH-port
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        run: |
+          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.cloudflare-ip.outputs.ipv4 }}/32
+        if: always()
